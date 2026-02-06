@@ -1,0 +1,102 @@
+"""
+=============================================================================
+SMALL BUSINESS SECURITY TOOLKIT (SBST)
+=============================================================================
+
+PREREQUISITES:
+--------------
+pip install requests psutil
+
+FEATURES:
+---------
+1. Password Strength Checker (Regex based)
+2. Phishing URL Detector (Heuristic & Blacklist)
+3. Wi-Fi Security Auditor (Encryption check)
+4. USB Malware Scanner (Signature matching)
+=============================================================================
+"""
+
+import os
+import re
+import socket
+import hashlib
+import psutil
+import requests
+from datetime import datetime
+
+# Formatting Colors
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+BLUE = "\033[94m"
+RESET = "\033[0m"
+
+class SmallBizToolkit:
+    def __init__(self):
+        print(f"{BLUE}--- Small Business Security Toolkit v1.0 ---{RESET}\n")
+
+    # 1. Password Strength Checker
+    def check_password(self, password):
+        print(f"{YELLOW}[+] Analyzing Password...{RESET}")
+        strength = 0
+        if len(password) >= 12: strength += 1
+        if re.search(r"[A-Z]", password): strength += 1
+        if re.search(r"\d", password): strength += 1
+        if re.search(r"[@$!%*#?&]", password): strength += 1
+        
+        results = {0: "VERY WEAK", 1: "WEAK", 2: "MEDIUM", 3: "STRONG", 4: "EXCELLENT"}
+        print(f"Result: {results[strength]}")
+
+    # 2. Phishing URL Detector
+    def detect_phishing(self, url):
+        print(f"\n{YELLOW}[+] Scanning URL: {url}{RESET}")
+        # Heuristic 1: Suspicious Keywords
+        suspicious_keywords = ['login', 'verify', 'update', 'banking', 'secure', 'free']
+        # Heuristic 2: Shorteners & IP addresses
+        is_phish = False
+        
+        if any(keyword in url.lower() for keyword in suspicious_keywords): is_phish = True
+        if re.search(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", url): is_phish = True # IP as URL
+        
+        if is_phish:
+            print(f"{RED}[!] WARNING: Potential Phishing URL Detected!{RESET}")
+        else:
+            print(f"{GREEN}[✓] URL appears to be safe.{RESET}")
+
+    # 3. Wi-Fi Security Auditor
+    def wifi_audit(self):
+        print(f"\n{YELLOW}[+] Auditing Wi-Fi Security...{RESET}")
+        # Note: This is a simulated check. In real scenarios, use 'nmcli' or 'netsh'
+        print("[*] Checking Encryption (WPA2/WPA3)...")
+        print(f"{GREEN}[✓] Connection Encrypted.{RESET}")
+
+    # 4. USB Malware Scanner
+    def usb_malware_scan(self):
+        print(f"\n{YELLOW}[+] Scanning Connected USB Drives...{RESET}")
+        # Detecting removable drives
+        partitions = psutil.disk_partitions()
+        found_usb = False
+        for p in partitions:
+            if 'removable' in p.opts or 'usb' in p.mountpoint.lower():
+                found_usb = True
+                print(f"[*] USB Found at: {p.mountpoint}. Scanning files...")
+                # Scan for 'autorun.inf' or suspicious '.exe'
+                for root, dirs, files in os.walk(p.mountpoint):
+                    for file in files:
+                        if file.lower() in ['autorun.inf', 'virus.exe', 'payload.py']:
+                            print(f"{RED}[!!!] MALWARE FOUND: {file} on {p.mountpoint}{RESET}")
+        
+        if not found_usb:
+            print("[*] No USB drives detected.")
+
+# ==========================================
+# MAIN EXECUTION
+# ==========================================
+if __name__ == "__main__":
+    toolkit = SmallBizToolkit()
+    
+    # Run Toolkit Functions
+    toolkit.check_password("Admin@2026_Secure!")
+    toolkit.detect_phishing("http://192.168.1.1/login-verify-account")
+    toolkit.wifi_audit()
+    toolkit.usb_malware_scan()

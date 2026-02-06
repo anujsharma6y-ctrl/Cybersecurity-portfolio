@@ -1,0 +1,133 @@
+import streamlit as st
+import psutil
+import os
+import socket
+import subprocess
+from datetime import datetime
+import pandas as pd
+
+# ==========================================
+# 1. PAGE & UI CONFIGURATION
+# ==========================================
+st.set_page_config(page_title="Sentinel Kill-Switch Dashboard", layout="wide")
+
+# Custom CSS: Dashboard ko professional look dene ke liye (Buttons aur Layout)
+st.markdown("""
+    <style>
+    .stButton>button { width: 100%; border-radius: 5px; height: 3em; font-weight: bold; }
+    .stMetric { background-color: #f0f2f6; padding: 15px; border-radius: 10px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ==========================================
+# 2. CORE SECURITY LOGIC (BACKEND)
+# ==========================================
+
+def get_system_stats():
+    """System ki Health (CPU/RAM) monitor karne ke liye function"""
+    return psutil.cpu_percent(), psutil.virtual_memory().percent
+
+def scan_open_ports():
+    """Localhost par critical ports ki security scan karne ke liye"""
+    open_ports = []
+    # Common attack vectors (SSH, HTTP, Database ports)
+    for port in [21, 22, 80, 443, 3306, 8080]:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.1) # Fast scanning
+            if s.connect_ex(('127.0.0.1', port)) == 0:
+                open_ports.append(port)
+    return open_ports
+
+def trigger_kill_switch():
+    """
+    NUCLEAR OPTION: 
+    1. Blacklisted processes (Miners/Backdoors) ko kill karta hai.
+    2. Linux firewall (iptables) ko use karke system ko network se isolate karta hai.
+    """
+    try:
+        # Step 1: Process Neutralization
+        blacklist = ["miner", "xmrig", "nc", "nmap", "backdoor"]
+        killed = []
+        for proc in psutil.process_iter(['pid', 'name']):
+            if any(bad in proc.info['name'].lower() for bad in blacklist):
+                proc.kill()
+                killed.append(proc.info['name'])
+        
+        # Step 2: Network Isolation (Hardening)
+        if os.name != 'nt': # Sirf Linux/Unix par chalega
+            # Pehle purane rules clear karein, phir sirf SSH allow karke sab block karein
+            subprocess.run(["sudo", "iptables", "-F"]) 
+            subprocess.run(["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "22", "-j", "ACCEPT"])
+            subprocess.run(["sudo", "iptables", "-P", "INPUT", "DROP"])
+            subprocess.run(["sudo", "iptables", "-P", "OUTPUT", "DROP"])
+        
+        return True, killed
+    except Exception as e:
+        return False, str(e)
+
+# ==========================================
+# 3. DASHBOARD FRONTEND (UI)
+# ==========================================
+
+st.title("🛡️ Sentinel: Enterprise Security Monitor")
+st.write(f"System Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+# Top Row: Real-time System Telemetry
+cpu, ram = get_system_stats()
+m1, m2, m3 = st.columns(3)
+m1.metric("CPU Load", f"{cpu}%", delta="High Load" if cpu > 80 else "Normal")
+m2.metric("Memory Usage", f"{ram}%")
+ports = scan_open_ports()
+m3.metric("Critical Open Ports", len(ports))
+
+st.divider()
+
+# Main View: Threat Logs & Emergency Controls
+col_left, col_right = st.columns([2, 1])
+
+with col_left:
+    st.subheader("🚀 Active Threat Intelligence")
+    # Ye data actual backend monitor se bhi link kiya ja sakta hai
+    data = {
+        "Incident Type": ["Brute Force", "Port Scan", "Unauthorized Script"],
+        "Source IP": ["192.168.1.105", "45.33.12.1", "Local System"],
+        "Action Taken": ["Blocked", "Logged", "Monitoring"]
+    }
+    st.dataframe(pd.DataFrame(data), use_container_width=True)
+    
+    st.subheader("🌐 Network Exposure Map")
+    if ports:
+        st.warning(f"⚠️ Security Alert: Exposed Ports Found -> {', '.join(map(str, ports))}")
+    else:
+        st.success("✅ System Hardened: No critical ports exposed.")
+
+with col_right:
+    st.subheader("🚨 Emergency Response")
+    st.info("Incident Response: Kill Switch triggers immediate process termination and network lockdown.")
+    
+    # Kill Switch Trigger Button
+    if st.button("🔥 ACTIVATE KILL SWITCH", type="primary"):
+        with st.status("Isolating System..."):
+            success, result = trigger_kill_switch()
+            if success:
+                st.error("SYSTEM ISOLATED: Lockdown Active")
+                st.write(f"Neutralized Threats: {result if result else 'None'}")
+                st.toast("Security Protocol Alpha Executed!", icon="🔒")
+            else:
+                st.warning(f"Execution Error: {result}")
+    
+    # Restoration Logic
+    if st.button("🔓 Restore Network Connectivity"):
+        if os.name != 'nt':
+            subprocess.run(["sudo", "iptables", "-F"])
+            subprocess.run(["sudo", "iptables", "-P", "INPUT", "ACCEPT"])
+            st.success("System Restored to Production Mode.")
+        else:
+            st.info("Note: Manual Firewall reset required on Windows.")
+
+# Sidebar Admin Info
+st.sidebar.image("https://img.icons8.com/fluency/144/security-checked.png")
+st.sidebar.header("Security Operator")
+st.sidebar.write(f"Logged in: **Tarun (Admin)**")
+if st.sidebar.button("Force Manual Scan"):
+    st.rerun()

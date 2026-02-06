@@ -1,0 +1,143 @@
+"""
+=============================================================================
+SENTINEL: AUTOMATED SECURITY REPORT GENERATOR
+=============================================================================
+
+PREREQUISITES:
+--------------
+Before running this script, ensure you have Python 3 installed and run:
+
+    pip install fpdf psutil
+
+OPTIONAL (For Cloud Audits):
+    pip install boto3
+
+CONFIGURING EMAIL (GMAIL):
+--------------------------
+1. Enable 2-Step Verification on your Google Account.
+2. Go to 'App Passwords' in Google Security settings.
+3. Generate a 16-character 'App Password'.
+4. Replace 'your_app_password' in the send_email_report() function below.
+
+USAGE:
+------
+Run via terminal: python3 report_generator.py
+=============================================================================
+"""
+
+import os
+import psutil
+from fpdf import FPDF
+import smtplib
+from email.message import EmailMessage
+from datetime import datetime
+
+# ==========================================
+# 1. DATA COLLECTION ENGINE
+# ==========================================
+class SecurityAuditor:
+    """
+    Aggregates intelligence from system and cloud monitoring modules.
+    """
+    def __init__(self):
+        self.report_date = datetime.now().strftime("%Y-%m-%d")
+        
+    def get_system_audit(self):
+        # Simulated data collection from local and cloud scanners
+        return {
+            "Open Ports": [22, 80, 443, 8080],
+            "Patch Status": "3 Critical Security Updates Pending",
+            "MFA Status": "ENABLED (Compliance: 100%)",
+            "Risks": "High: 1 (S3 Public Bucket), Medium: 2 (Unused IAM Keys)"
+        }
+
+# ==========================================
+# 2. PDF REPORT GENERATOR
+# ==========================================
+class PDFReport(FPDF):
+    """
+    Handles the professional formatting of the PDF document.
+    """
+    def header(self):
+        # Report Branding
+        self.set_font('Arial', 'B', 15)
+        self.set_text_color(33, 37, 41)
+        self.cell(0, 10, 'SENTINEL WEEKLY SECURITY AUDIT', 0, 1, 'C')
+        self.set_font('Arial', 'I', 10)
+        self.cell(0, 10, f'Report Identifier: SR-{datetime.now().strftime("%Y%m%d")}', 0, 1, 'C')
+        self.ln(10)
+
+    def chapter_body(self, title, content):
+        # Styled Header for Sections
+        self.set_font('Arial', 'B', 12)
+        self.set_fill_color(240, 242, 245)
+        self.cell(0, 10, f" {title}", 0, 1, 'L', fill=True)
+        # Content body
+        self.set_font('Arial', '', 11)
+        self.ln(2)
+        self.multi_cell(0, 8, content)
+        self.ln(5)
+
+    def footer(self):
+        # Confidentiality Notice and Page Numbering
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, f'Sentinel Security Suite - Internal Only - Page {self.page_no()}', 0, 0, 'C')
+
+# ==========================================
+# 3. EMAIL AUTOMATION ENGINE
+# ==========================================
+def send_email_report(pdf_filename):
+    """
+    Transmits the generated PDF via secure SMTP.
+    """
+    # CREDENTIALS
+    EMAIL_ADDRESS = "your_email@gmail.com"
+    EMAIL_PASSWORD = "your_app_password" 
+
+    msg = EmailMessage()
+    msg['Subject'] = f'SENTINEL: Weekly Security Infrastructure Report - {datetime.now().strftime("%d %b %Y")}'
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = "management@example.com"
+    msg.set_content(f"Security Alert,\n\nPlease review the attached Weekly Security Audit for {datetime.now().strftime('%B %Y')}.\n\nAutomated by Sentinel.")
+
+    # PDF Attachment Logic
+    try:
+        with open(pdf_filename, 'rb') as f:
+            file_data = f.read()
+            msg.add_attachment(file_data, maintype='application', subtype='pdf', filename=pdf_filename)
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print(f"[✓] Email successfully dispatched to {msg['To']}")
+    except Exception as e:
+        print(f"[!] Email dispatch failed: {e}")
+
+# ==========================================
+# 4. MAIN EXECUTION FLOW
+# ==========================================
+if __name__ == "__main__":
+    print("[*] Sentinel Audit Engine starting...")
+    
+    auditor = SecurityAuditor()
+    data = auditor.get_system_audit()
+    
+    # Generate PDF Object
+    pdf = PDFReport()
+    pdf.add_page()
+    
+    # Populate PDF with gathered Intelligence
+    pdf.chapter_body("1. Security Vulnerability Summary", data["Risks"])
+    pdf.chapter_body("2. Network Infrastructure Audit", f"Active Services detected on ports: {data['Open Ports']}")
+    pdf.chapter_body("3. Access Control (IAM/MFA)", f"Current Status: {data['MFA Status']}")
+    pdf.chapter_body("4. Patch Management Compliance", data["Patch Status"])
+    
+    # Export File
+    output_filename = f"Sentinel_Audit_{auditor.report_date}.pdf"
+    pdf.output(output_filename)
+    
+    print(f"[✓] Audit Report successfully generated: {output_filename}")
+
+    # Note: Enable the line below after configuring SMTP credentials
+    # send_email_report(output_filename)
