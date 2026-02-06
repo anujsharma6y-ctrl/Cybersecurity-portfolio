@@ -1,3 +1,9 @@
+# 🛡️ Cybersecurity Portfolio Suite
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-red.svg)](./LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 🛡️ Sentinel-Security-Suite: Advanced Security & IR Framework
 A comprehensive, centralized command-center designed for Security Engineers and DevOps professionals. This suite automates complex tasks across network auditing, cloud compliance, threat detection, and automated incident response using Python.
 
