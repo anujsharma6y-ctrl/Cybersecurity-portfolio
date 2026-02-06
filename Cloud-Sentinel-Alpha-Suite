@@ -1,0 +1,80 @@
+import os
+import json
+import logging
+
+# Formatting
+CYAN = "\033[96m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+BOLD = "\033[1m"
+RESET = "\033[0m"
+
+class CloudSentinelSuite:
+    def __init__(self):
+        print(f"{CYAN}{BOLD}=== Cloud-Sentinel-Alpha: Advanced Security Suite ==={RESET}")
+        self.inventory = []
+        self.vulnerabilities = []
+
+    # 1. Cloud Resource Inventory (Mock/AWS Logic)
+    def resource_inventory(self):
+        print(f"\n{YELLOW}[+] Building Cloud Resource Inventory...{RESET}")
+        # Real-world: Use boto3.client('resourcegroupstaggingapi')
+        self.inventory = [
+            {"type": "S3", "name": "user-data-backup", "region": "us-east-1"},
+            {"type": "EC2", "name": "web-server-01", "ip": "54.12.33.1"},
+            {"type": "IAM", "name": "admin-role", "policy": "AdministratorAccess"}
+        ]
+        for item in self.inventory:
+            print(f"[*] Found {item['type']}: {item['name']}")
+
+    # 2. S3 Public Bucket Scanner
+    def s3_bucket_audit(self):
+        print(f"\n{YELLOW}[+] Auditing S3 Buckets for Public Exposure...{RESET}")
+        for res in self.inventory:
+            if res['type'] == "S3":
+                # Simulated check for ACL/Policy
+                is_public = True # Mock finding
+                if is_public:
+                    msg = f"CRITICAL: Public S3 Bucket Detected -> {res['name']}"
+                    print(f"{RED}[!] {msg}{RESET}")
+                    self.vulnerabilities.append({"impact": "High", "desc": msg, "mitre_id": "T1530"})
+
+    # 3. IAM Misconfiguration Detector
+    def iam_audit(self):
+        print(f"\n{YELLOW}[+] Scanning IAM Policies for Misconfigurations...{RESET}")
+        for res in self.inventory:
+            if res['type'] == "IAM" and res['policy'] == "AdministratorAccess":
+                msg = f"RISK: Over-privileged IAM Role -> {res['name']}"
+                print(f"{RED}[!] {msg}{RESET}")
+                self.vulnerabilities.append({"impact": "Medium", "desc": msg, "mitre_id": "T1078"})
+
+    # 4. MITRE ATT&CK Mapping & Attack Surface Mapper
+    def mitre_attack_mapping(self):
+        print(f"\n{CYAN}{BOLD}[+] Mapping Findings to MITRE ATT&CK Framework...{RESET}")
+        mapping = {
+            "T1530": "Data from Cloud Storage Object",
+            "T1078": "Valid Accounts (Excessive Permissions)",
+            "T1580": "Cloud Infrastructure Discovery"
+        }
+        
+        print(f"{GREEN}{'ID':<10} | {'Technique':<35} | {'Finding'}{RESET}")
+        print("-" * 75)
+        for vuln in self.vulnerabilities:
+            tech_name = mapping.get(vuln['mitre_id'], "Unknown Technique")
+            print(f"{vuln['mitre_id']:<10} | {tech_name:<35} | {vuln['impact']}")
+
+    # 5. Cloud Attack Surface Mapper (Visualizing entry points)
+    def attack_surface_summary(self):
+        print(f"\n{YELLOW}[+] Generating Attack Surface Report...{RESET}")
+        entry_points = [i['ip'] for i in self.inventory if 'ip' in i]
+        print(f"[*] External Entry Points: {entry_points}")
+        print(f"[*] Total Critical Misconfigurations: {len(self.vulnerabilities)}")
+
+if __name__ == "__main__":
+    sentinel = CloudSentinelSuite()
+    sentinel.resource_inventory()
+    sentinel.s3_bucket_audit()
+    sentinel.iam_audit()
+    sentinel.mitre_attack_mapping()
+    sentinel.attack_surface_summary()
