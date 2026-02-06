@@ -1,0 +1,89 @@
+import os
+import psutil
+import subprocess
+import re
+import logging
+import sys
+from datetime import datetime
+
+# Formatting for terminal
+RED = "\033[91m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RESET = "\033[0m"
+
+logging.basicConfig(filename='security_audit.log', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+class SentinelSecuritySuite:
+    def __init__(self):
+        self.stats = {"threats_killed": 0, "risks_found": 0, "services_fixed": 0}
+
+    def service_hardener(self, services=["ssh", "nginx", "apache2"]):
+        print(f"{YELLOW}[+] Auditing System Services...{RESET}")
+        if sys.platform == "win32":
+            print(f"{RED}[!] Service hardening skipped: systemctl requires Linux.{RESET}")
+            return
+
+        for service in services:
+            try:
+                status = subprocess.run(["systemctl", "is-active", service], 
+                                     capture_output=True, text=True, timeout=5)
+                state = status.stdout.strip()
+                if state != "active":
+                    print(f"{RED}[!] ALERT: {service} is {state}. Restarting...{RESET}")
+                    subprocess.run(["sudo", "systemctl", "restart", service])
+                    self.stats["services_fixed"] += 1
+                    logging.warning(f"Restarted dead service: {service}")
+            except Exception as e:
+                logging.error(f"Error checking {service}: {e}")
+
+    def permission_scanner(self, target_path="/etc"):
+        print(f"{YELLOW}[+] Scanning permissions in {target_path}...{RESET}")
+        try:
+            for root, _, files in os.walk(target_path):
+                for name in files:
+                    full_path = os.path.join(root, name)
+                    stats = os.stat(full_path)
+                    if stats.st_mode & 0o002: # World Writable
+                        print(f"{RED}[!] CRITICAL: World-writable -> {full_path}{RESET}")
+                        logging.critical(f"Insecure Permission: {full_path}")
+                        self.stats["risks_found"] += 1
+        except PermissionError:
+            print(f"{RED}[!] Permission Denied. Please run as root (sudo).{RESET}")
+
+    def threat_containment(self):
+        print(f"{YELLOW}[+] Monitoring active processes...{RESET}")
+        blacklist = ["xmrig", "miner", "backdoor"]
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                if any(bad in proc.info['name'].lower() for bad in blacklist):
+                    msg = f"THREAT NEUTRALIZED: Killed {proc.info['name']} (PID: {proc.info['pid']})"
+                    proc.kill()
+                    print(f"{RED}{msg}{RESET}")
+                    logging.critical(msg)
+                    self.stats["threats_killed"] += 1
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+    def show_summary(self):
+        print(f"\n{GREEN}================ AUDIT SUMMARY ================{RESET}")
+        print(f"Services Restored:  {self.stats['services_fixed']}")
+        print(f"Permissions Risks:  {self.stats['risks_found']}")
+        print(f"Threats Contained:  {self.stats['threats_killed']}")
+        print(f"{GREEN}==============================================={RESET}")
+        print(f"Full log: {os.path.abspath('security_audit.log')}")
+
+if __name__ == "__main__":
+    # Windows par geteuid() nahi hota, isliye check platform first
+    if sys.platform != "win32":
+        if os.geteuid() != 0:
+            print(f"{YELLOW}[!] Warning: Not running as root. Some audits will fail.{RESET}")
+    else:
+        print(f"{YELLOW}[!] Running on Windows: Service hardening (systemctl) will be skipped.{RESET}")
+    
+    suite = SentinelSecuritySuite()
+    suite.service_hardener()
+    suite.permission_scanner()
+    suite.threat_containment()
+    suite.show_summary()
