@@ -1,0 +1,98 @@
+import os
+import time
+import hashlib
+import re
+import psutil
+import logging
+from datetime import datetime
+
+# Terminal Colors
+RED = "\033[91m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+CYAN = "\033[96m"
+RESET = "\033[0m"
+
+logging.basicConfig(filename='soc_alerts.log', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+class SOCSuite:
+    def __init__(self):
+        print(f"{CYAN}🛡️ SOC Automation & Threat Detection Suite Initialized...{RESET}\n")
+
+    # 1. SSH Brute-Force Detector (Auth Log Monitoring)
+    def ssh_brute_force_detector(self, log_path="/var/log/auth.log"):
+        print(f"{YELLOW}[+] Monitoring SSH Logs for Brute-Force...{RESET}")
+        if not os.path.exists(log_path):
+            print(f"{RED}[!] Auth log not found. Skipping...{RESET}")
+            return
+        
+        with open(log_path, 'r') as f:
+            failed_logins = re.findall(r"Failed password for.*from ([\d.]+)", f.read())
+            ip_counts = {ip: failed_logins.count(ip) for ip in set(failed_logins)}
+            
+            for ip, count in ip_counts.items():
+                if count > 5: # Threshold
+                    msg = f"CRITICAL: SSH Brute-Force detected from IP: {ip} (Attempts: {count})"
+                    print(f"{RED}{msg}{RESET}")
+                    logging.critical(msg)
+
+    # 2. Malware Hash Checker (Against known bad hashes)
+    def malware_hash_checker(self, file_path):
+        # Example of known malicious MD5 hashes (for demo)
+        known_malware_hashes = ["44d88612fea8a8f36de82e1278abb02f", "e5d88612fea8a8f36de82e1278abb03a"]
+        print(f"{YELLOW}[+] Checking file hash for Malware...{RESET}")
+        
+        hasher = hashlib.md5()
+        with open(file_path, 'rb') as f:
+            buf = f.read()
+            hasher.update(buf)
+        file_hash = hasher.hexdigest()
+
+        if file_hash in known_malware_hashes:
+            print(f"{RED}[!!!] MALWARE DETECTED: {file_path} matches known signature!{RESET}")
+            logging.error(f"Malware found: {file_path}")
+        else:
+            print(f"{GREEN}[✓] File hash is clean.{RESET}")
+
+    # 3. Ransomware Behavior Detector (Rapid File Encryption Pattern)
+    def ransomware_behavior_detector(self, directory="."):
+        print(f"{YELLOW}[+] Scanning for Ransomware patterns (rapid file changes)...{RESET}")
+        # Logic: Looking for specific extensions like .locked, .crypto, .crypted
+        ransom_extensions = ['.locked', '.crypto', '.crypted', '.enc']
+        detected = False
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if any(file.endswith(ext) for ext in ransom_extensions):
+                    msg = f"SUSPICIOUS: Potential Ransomware file found: {file}"
+                    print(f"{RED}{msg}{RESET}")
+                    logging.warning(msg)
+                    detected = True
+        if not detected: print(f"{GREEN}[✓] No ransomware patterns found.{RESET}")
+
+    # 4. Simple IDS & Log Intrusion Detector (Signature Based)
+    def log_intrusion_detector(self, log_path="/var/log/syslog"):
+        print(f"{YELLOW}[+] Running Signature-based IDS on System Logs...{RESET}")
+        signatures = ["sql injection", "nmap", "reverse shell", "backdoor"]
+        if not os.path.exists(log_path): return
+
+        with open(log_path, 'r') as f:
+            logs = f.readlines()[-100:] # Check last 100 lines
+            for line in logs:
+                if any(sig in line.lower() for sig in signatures):
+                    msg = f"IDS ALERT: Malicious activity signature found in log: {line.strip()}"
+                    print(f"{RED}{msg}{RESET}")
+                    logging.critical(msg)
+
+if __name__ == "__main__":
+    soc = SOCSuite()
+    
+    # Run SOC Modules
+    soc.ssh_brute_force_detector()
+    soc.log_intrusion_detector()
+    soc.ransomware_behavior_detector()
+    
+    # Test Malware Checker on current script
+    soc.malware_hash_checker(__file__)
+
+    print(f"\n{CYAN}Audit Complete. Check 'soc_alerts.log' for details.{RESET}")
