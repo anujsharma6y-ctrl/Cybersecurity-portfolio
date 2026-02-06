@@ -1,0 +1,89 @@
+import os
+import socket
+import hashlib
+import re
+import sys
+from datetime import datetime
+
+# Terminal Colors
+CYAN = "\033[96m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+RESET = "\033[0m"
+
+class CyberMonitorSuite:
+    def __init__(self):
+        print(f"{CYAN}=== Core Cybersecurity Monitoring Suite v1.0 ==={RESET}")
+
+    # 1. Network Connectivity Diagnostic (Ping-like check)
+    def network_diagnostic(self, host="8.8.8.8"):
+        print(f"\n{YELLOW}[+] Diagnosing Network Connectivity...{RESET}")
+        try:
+            socket.setdefaulttimeout(3)
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, 53))
+            print(f"{GREEN}[✓] Internet Connection: ACTIVE (Host: {host}){RESET}")
+        except Exception:
+            print(f"{RED}[!] Internet Connection: OFFLINE{RESET}")
+
+    # 2. Custom Port Scanner (Fast & Basic)
+    def port_scanner(self, target="127.0.0.1"):
+        print(f"\n{YELLOW}[+] Scanning Critical Ports on {target}...{RESET}")
+        common_ports = [21, 22, 80, 443, 3306, 8080]
+        for port in common_ports:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.setdefaulttimeout(1)
+            result = s.connect_ex((target, port))
+            if result == 0:
+                print(f"{GREEN}[!] Port {port}: OPEN{RESET}")
+            s.close()
+
+    # 3. File Integrity Checker (SHA-256 Hashing)
+    def file_integrity(self, filepath):
+        print(f"\n{YELLOW}[+] Checking File Integrity: {filepath}{RESET}")
+        if not os.path.exists(filepath):
+            print(f"{RED}[!] File not found!{RESET}")
+            return
+        
+        sha256_hash = hashlib.sha256()
+        with open(filepath, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        
+        fingerprint = sha256_hash.hexdigest()
+        print(f"{CYAN}[*] SHA-256 Fingerprint: {fingerprint}{RESET}")
+        return fingerprint
+
+    # 4. Password Strength Analyzer
+    def password_audit(self, password):
+        print(f"\n{YELLOW}[+] Analyzing Password Strength...{RESET}")
+        strength = 0
+        remarks = ""
+        
+        if len(password) >= 8: strength += 1
+        if re.search(r"[a-z]", password) and re.search(r"[A-Z]", password): strength += 1
+        if re.search(r"\d", password): strength += 1
+        if re.search(r"[@$!%*#?&]", password): strength += 1
+        
+        if strength <= 2: remarks = f"{RED}WEAK{RESET}"
+        elif strength == 3: remarks = f"{YELLOW}MEDIUM{RESET}"
+        else: remarks = f"{GREEN}STRONG{RESET}"
+        
+        print(f"[*] Result: {remarks} (Score: {strength}/4)")
+
+# --- Execution ---
+if __name__ == "__main__":
+    monitor = CyberMonitorSuite()
+    
+    # Run Diagnostics
+    monitor.network_diagnostic()
+    monitor.port_scanner("127.0.0.1")
+    
+    # Test Password Analyzer
+    test_pass = "Admin@123"
+    monitor.password_audit(test_pass)
+    
+    # Test File Integrity (Current Script)
+    monitor.file_integrity(sys.argv[0])
+
+    print(f"\n{GREEN}[✓] Monitoring Task Completed.{RESET}")
