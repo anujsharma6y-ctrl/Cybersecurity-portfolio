@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Service-Permission-Security-Suite Installer
+# Author: Anuj Sharma
+
+echo "=========================================="
+echo "   Sentinel-SecOps-Suite Installer"
+echo "=========================================="
+
+# 1. Update system
+echo "[+] Updating system packages..."
+sudo apt-get update -y && sudo apt-get upgrade -y
+
+# 2. Install Python and Pip if not present
+echo "[+] Checking Python environment..."
+sudo apt-get install -y python3 python3-pip
+
+# 3. Install required Python libraries
+echo "[+] Installing dependencies (psutil, requests)..."
+pip3 install psutil --break-system-packages 2>/dev/null || pip3 install psutil
+
+# 4. Set permissions for the main script
+echo "[+] Setting executable permissions for scripts..."
+chmod +x security_suite.py
+
+# 5. Create Log Directory
+echo "[+] Initializing log files..."
+touch security_audit.log
+chmod 666 security_audit.log
+
+echo "=========================================="
+echo " SETUP COMPLETE! "
+echo " Run with: sudo python3 security_suite.py"
+echo "=========================================="
