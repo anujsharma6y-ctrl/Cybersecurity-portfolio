@@ -1,9 +1,5 @@
 # 🛡️ Cybersecurity Portfolio Suite
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-red.svg)](./LICENSE)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 🛡️ Sentinel-Security-Suite: Advanced Security & IR Framework
 A comprehensive, centralized command-center designed for Security Engineers and DevOps professionals. This suite automates complex tasks across network auditing, cloud compliance, threat detection, and automated incident response using Python.
 
@@ -86,8 +82,30 @@ Core Libraries: streamlit, boto3, psutil, fpdf, requests, pandas, hashlib
 
 Standard Compliance: MITRE ATT&CK, NIST, CIS Benchmarks
 
-⚖️ License
-This project is licensed under the MIT License - see the LICENSE file for details.
+
+## ⚖️ License & Legal Information
+
+This project is primarily licensed under the **MIT License**, with specific modules covered under **Apache 2.0** and **GPL v3**.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-red.svg)](./LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+
+### Key Permissions:
+- ✅ **Commercial Use:** You can use this code for business purposes.
+- ✅ **Modification:** You can change the code however you like.
+- ✅ **Distribution:** You can share the code with others.
+- ✅ **Private Use:** You can use it privately.
+
+### Conditions:
+- ⚠️ **Notice:** You must include the original copyright and license notice in any copy of the software/source code.
+
+### Warranty:
+- 🛡️ **No Warranty:** The software is provided "as is", without any warranty of any kind. The author is not liable for any claims or damages.
+
+**For more details, view the [Full LICENSE File](./LICENSE)**
+
 
 👨‍💻 Author
 Anuj Sharma Cybersecurity Enthusiast | Security Automation Specialist | DevSecOps Engineer
